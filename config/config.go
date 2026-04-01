@@ -28,5 +28,7 @@ func LoadConfig() *Config {
 		DBPassword: os.Getenv("DB_PASSWORD"),
 		DBName:     os.Getenv("DB_NAME"),
 		ServerPort: os.Getenv("SERVER_PORT"),
+		//RedisAddr:  os.Getenv("REDIS_ADDR"),
+		
 	}
 }

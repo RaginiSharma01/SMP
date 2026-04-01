@@ -20,8 +20,8 @@ func NewUserRepo(pool *pgxpool.Pool) *UserRepo {
 func (r *UserRepo) OnboardUsers(ctx context.Context, user models.User) (string, error) {
 
 	query := `
-	INSERT INTO users (email,password,role,is_verified,created_at)
-	VALUES ($1,$2,$3,false,$4)
+	INSERT INTO users (email, password, role, is_verified, created_at)
+	VALUES ($1,$2,$3,$4,$5)
 	RETURNING id
 	`
 

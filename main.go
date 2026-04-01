@@ -5,6 +5,10 @@ import (
 	"log"
 	"smp/config"
 	"smp/db"
+	"smp/handler"
+	"smp/repository"
+	"smp/routes"
+	"smp/service"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
@@ -28,6 +32,11 @@ func main() {
 	app.Get("/health", func(c fiber.Ctx) error {
 		return c.SendString("server is running")
 	})
+
+	userRepo := repository.NewUserRepo(database.Pool)
+	userService := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userService)
+	routes.SetupUserRoutes(app, userHandler)
 
 	log.Fatal(app.Listen(cfg.ServerPort))
 }
