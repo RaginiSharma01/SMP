@@ -7,14 +7,20 @@ import (
 	"smp/repository"
 	"smp/utils"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type UserService struct {
-	Repo *repository.UserRepo
+	Repo  *repository.UserRepo
+	Redis *redis.Client
 }
 
-func NewUserService(repo *repository.UserRepo) *UserService {
-	return &UserService{Repo: repo}
+func NewUserService(repo *repository.UserRepo, redis *redis.Client) *UserService {
+	return &UserService{
+		Repo:  repo,
+		Redis: redis,
+	}
 }
 
 func (s *UserService) OnboardUsers(ctx context.Context, user models.User) (string, error) {
@@ -24,11 +30,11 @@ func (s *UserService) OnboardUsers(ctx context.Context, user models.User) (strin
 	}
 
 	if user.Password == "" || len(user.Password) < 8 {
-		return "", errors.New("password must be atleast 8 characters")
+		return "", errors.New("password must be at least 8 characters")
 	}
 
 	if user.Role != "teacher" && user.Role != "student" {
-		return "", errors.New("Please select your role")
+		return "", errors.New("please select your role")
 	}
 
 	// hash password
@@ -41,7 +47,7 @@ func (s *UserService) OnboardUsers(ctx context.Context, user models.User) (strin
 	user.IsVerified = false
 	user.CreatedAt = time.Now()
 
-	// save user
+	// save user in DB
 	userID, err := s.Repo.OnboardUsers(ctx, user)
 	if err != nil {
 		return "", err
@@ -50,11 +56,47 @@ func (s *UserService) OnboardUsers(ctx context.Context, user models.User) (strin
 	// generate OTP
 	otp := utils.GenerateOTP()
 
-	// send email
+	// store OTP in redis
+	err = utils.StoreOTP(ctx, s.Redis, user.Email, otp)
+	if err != nil {
+		return "", err
+	}
+
+	// send OTP email
 	err = utils.SendOTPEmail(user.Email, otp)
 	if err != nil {
 		return "", err
 	}
 
 	return userID, nil
+}
+
+func (s *UserService) VerifyOTP(ctx context.Context, email string, otp string) error {
+
+	if email == "" || otp == "" {
+		return errors.New("email and otp required")
+	}
+
+	// get OTP from redis
+	storedOTP, err := utils.GetOTP(ctx, s.Redis, email)
+	if err != nil {
+		return errors.New("otp expired")
+	}
+
+	// compare OTP
+	if storedOTP != otp {
+		return errors.New("invalid otp")
+	}
+
+	// mark user verified in DB
+	err = s.Repo.VerifyUser(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	// delete OTP after verification
+	key := "otp:" + email
+	s.Redis.Del(ctx, key)
+
+	return nil
 }

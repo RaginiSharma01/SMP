@@ -43,3 +43,15 @@ func (r *UserRepo) OnboardUsers(ctx context.Context, user models.User) (string, 
 
 	return id, nil
 }
+
+func (r *UserRepo) VerifyUser(ctx context.Context, email string) error {
+
+	query := `
+	UPDATE users
+	SET is_verified = true
+	WHERE email = $1
+	`
+
+	_, err := r.DB.Exec(ctx, query, email)
+	return err
+}

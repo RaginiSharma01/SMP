@@ -43,3 +43,30 @@ func (h *UserHandler) OnboardUsers(c fiber.Ctx) error {
 		},
 	})
 }
+
+func (h *UserHandler) VerifyOTP(c fiber.Ctx) error {
+
+	type request struct {
+		Email string `json:"email"`
+		OTP   string `json:"otp"`
+	}
+
+	var req request
+
+	if err := c.Bind().Body(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "invalid request",
+		})
+	}
+
+	err := h.Service.VerifyOTP(c.Context(), req.Email, req.OTP)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "email verified successfully",
+	})
+}

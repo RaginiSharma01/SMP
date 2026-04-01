@@ -12,6 +12,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -33,8 +34,12 @@ func main() {
 		return c.SendString("server is running")
 	})
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+
 	userRepo := repository.NewUserRepo(database.Pool)
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, rdb)
 	userHandler := handler.NewUserHandler(userService)
 	routes.SetupUserRoutes(app, userHandler)
 
