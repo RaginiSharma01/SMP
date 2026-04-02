@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"smp/models"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -54,4 +56,27 @@ func (r *UserRepo) VerifyUser(ctx context.Context, email string) error {
 
 	_, err := r.DB.Exec(ctx, query, email)
 	return err
+}
+
+func (r *UserRepo) IsUserVerified(ctx context.Context, email string) (bool, error) {
+
+	query := `
+	SELECT is_verified
+	FROM users
+	WHERE email = $1
+	`
+
+	var verified bool
+
+	err := r.DB.QueryRow(ctx, query, email).Scan(&verified)
+
+	if err == pgx.ErrNoRows {
+		return false, errors.New("user not found")
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return verified, nil
 }

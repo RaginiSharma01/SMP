@@ -12,6 +12,7 @@ func SetupUserRoutes(
 ) {
 
 	app.Post("/signup", userHandler.OnboardUsers)
+	app.Post("/resend-otp", userHandler.ResendOTP)
 	app.Post("/verify-otp", userHandler.VerifyOTP)
 
 }

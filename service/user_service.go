@@ -37,6 +37,17 @@ func (s *UserService) OnboardUsers(ctx context.Context, user models.User) (strin
 		return "", errors.New("please select your role")
 	}
 
+	// check if already verified
+	verified, err := s.Repo.IsUserVerified(ctx, user.Email)
+	if err == nil && verified {
+		return "", errors.New("user already verified")
+	}
+
+	// OTP limit check
+	if err := utils.CheckOTPLimit(ctx, s.Redis, user.Email); err != nil {
+		return "", err
+	}
+
 	// hash password
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
@@ -47,22 +58,18 @@ func (s *UserService) OnboardUsers(ctx context.Context, user models.User) (strin
 	user.IsVerified = false
 	user.CreatedAt = time.Now()
 
-	// save user in DB
 	userID, err := s.Repo.OnboardUsers(ctx, user)
 	if err != nil {
 		return "", err
 	}
 
-	// generate OTP
 	otp := utils.GenerateOTP()
 
-	// store OTP in redis
 	err = utils.StoreOTP(ctx, s.Redis, user.Email, otp)
 	if err != nil {
 		return "", err
 	}
 
-	// send OTP email
 	err = utils.SendOTPEmail(user.Email, otp)
 	if err != nil {
 		return "", err
@@ -99,4 +106,29 @@ func (s *UserService) VerifyOTP(ctx context.Context, email string, otp string) e
 	s.Redis.Del(ctx, key)
 
 	return nil
+}
+
+func (s *UserService) ResendOTP(ctx context.Context, email string) error {
+
+	verified, err := s.Repo.IsUserVerified(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	if verified {
+		return errors.New("user already verified")
+	}
+
+	if err := utils.CheckOTPLimit(ctx, s.Redis, email); err != nil {
+		return err
+	}
+
+	otp := utils.GenerateOTP()
+
+	err = utils.StoreOTP(ctx, s.Redis, email, otp)
+	if err != nil {
+		return err
+	}
+
+	return utils.SendOTPEmail(email, otp)
 }

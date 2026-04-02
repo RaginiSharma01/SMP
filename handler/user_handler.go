@@ -44,6 +44,32 @@ func (h *UserHandler) OnboardUsers(c fiber.Ctx) error {
 	})
 }
 
+func (h *UserHandler) ResendOTP(c fiber.Ctx) error {
+
+	type request struct {
+		Email string `json:"email"`
+	}
+
+	var req request
+
+	if err := c.Bind().Body(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "invalid request",
+		})
+	}
+
+	err := h.Service.ResendOTP(c.Context(), req.Email)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "otp sent successfully",
+	})
+}
+
 func (h *UserHandler) VerifyOTP(c fiber.Ctx) error {
 
 	type request struct {
