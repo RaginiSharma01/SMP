@@ -41,7 +41,12 @@ func main() {
 	userRepo := repository.NewUserRepo(database.Pool)
 	userService := service.NewUserService(userRepo, rdb)
 	userHandler := handler.NewUserHandler(userService)
-	routes.SetupUserRoutes(app, userHandler)
+
+	studentRepo := repository.NewStudent(database.Pool)
+	studentService := service.NewStudentService(studentRepo)
+	studentHandler := handler.NewStudentHandler(studentService)
+
+	routes.SetupUserRoutes(app, userHandler, studentHandler)
 
 	log.Fatal(app.Listen(cfg.ServerPort))
 }
