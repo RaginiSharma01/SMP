@@ -132,3 +132,34 @@ func (s *UserService) ResendOTP(ctx context.Context, email string) error {
 
 	return utils.SendOTPEmail(email, otp)
 }
+
+func (s *UserService) Login(ctx context.Context, email string, password string) (string, error) {
+
+	if email == "" || password == "" {
+		return "", errors.New("email and password required")
+	}
+
+	user, err := s.Repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		return "", errors.New("invalid credentials")
+	}
+
+	// check email verified
+	if !user.IsVerified {
+		return "", errors.New("email not verified")
+	}
+
+	// compare password
+	err = utils.CheckPasswordHash(password, user.Password)
+	if err != nil {
+		return "", errors.New("invalid credentials")
+	}
+
+	// generate jwt
+	token, err := utils.GenerateJWT(user.ID, user.Email)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}

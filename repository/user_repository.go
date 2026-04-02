@@ -80,3 +80,28 @@ func (r *UserRepo) IsUserVerified(ctx context.Context, email string) (bool, erro
 
 	return verified, nil
 }
+
+func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+
+	query := `
+	SELECT id, email, password, role, is_verified
+	FROM users
+	WHERE email = $1
+	`
+
+	var user models.User
+
+	err := r.DB.QueryRow(ctx, query, email).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Password,
+		&user.Role,
+		&user.IsVerified,
+	)
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
+}

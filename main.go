@@ -46,7 +46,11 @@ func main() {
 	studentService := service.NewStudentService(studentRepo)
 	studentHandler := handler.NewStudentHandler(studentService)
 
-	routes.SetupUserRoutes(app, userHandler, studentHandler)
+	classRepo := repository.NewClassroomRepository(database.Pool)
+	classService := service.NewClassroomService(classRepo)
+	classHandler := handler.NewClassroomHandler(classService)
+
+	routes.SetupUserRoutes(app, userHandler, studentHandler, classHandler)
 
 	log.Fatal(app.Listen(cfg.ServerPort))
 }

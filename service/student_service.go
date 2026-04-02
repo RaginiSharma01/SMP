@@ -17,15 +17,11 @@ func NewStudentService(repo *repository.StudentRepository) *StudentService {
 	}
 }
 
-// after a student signup , student starts entering there details
-//here i need to add the student's roll no, classroom , name , phone no , dob, age, address , parent and there occupation, student's heigth and weight, photo_url(file uploding)
-
 func (s *StudentService) EnterStudentDetails(
 	ctx context.Context,
 	student models.Student,
 ) (string, error) {
 
-	// Basic validations
 	if student.FirstName == "" {
 		return "", errors.New("first name required")
 	}
@@ -50,19 +46,12 @@ func (s *StudentService) EnterStudentDetails(
 		return "", errors.New("invalid age")
 	}
 
-	// Guardian rule
 	if student.FatherName == "" &&
 		student.MotherName == "" &&
 		student.GuardianName == "" {
 
-		return "", errors.New("guardian required if parents not provided")
+		return "", errors.New("guardian required")
 	}
 
-	// Call repository
-	id, err := s.Repo.EnterStudentDetails(ctx, student)
-	if err != nil {
-		return "", err
-	}
-
-	return id, nil
+	return s.Repo.EnterStudentDetails(ctx, student)
 }

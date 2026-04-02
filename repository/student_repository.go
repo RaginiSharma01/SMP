@@ -4,6 +4,7 @@ import (
 	"context"
 	"smp/models"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,14 +17,21 @@ func NewStudent(pool *pgxpool.Pool) *StudentRepository {
 		DB: pool,
 	}
 }
-func (r *StudentRepository) EnterStudentDetails(ctx context.Context, student models.Student) (string, error) {
+
+func (r *StudentRepository) EnterStudentDetails(
+	ctx context.Context,
+	student models.Student,
+) (string, error) {
+
+	id := uuid.New().String()
 
 	query := `
 	INSERT INTO students (
-		classroom_id,
-		roll_number,
+		id,
 		first_name,
 		last_name,
+		roll_no,
+		class_id,
 		phone,
 		dob,
 		age,
@@ -33,8 +41,7 @@ func (r *StudentRepository) EnterStudentDetails(ctx context.Context, student mod
 		guardian_name,
 		occupation,
 		height,
-		weight,
-		photo_url
+		weight
 	)
 	VALUES (
 		$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15
@@ -42,26 +49,24 @@ func (r *StudentRepository) EnterStudentDetails(ctx context.Context, student mod
 	RETURNING id
 	`
 
-	var id string
-
 	err := r.DB.QueryRow(
 		ctx,
 		query,
-		student.ClassroomID,
-		student.RollNumber,
+		id,
 		student.FirstName,
 		student.LastName,
+		student.RollNumber,
+		student.ClassroomID,
 		student.Phone,
 		student.DOB,
 		student.Age,
 		student.Address,
-		student.FatherName,   //optional
-		student.MotherName,   //optional
-		student.GuardianName, //manadtory
+		student.FatherName,
+		student.MotherName,
+		student.GuardianName,
 		student.Occupation,
 		student.Height,
 		student.Weight,
-		student.PhotoURL,
 	).Scan(&id)
 
 	if err != nil {

@@ -3,9 +3,9 @@ package models
 import "time"
 
 type Student struct {
-	ID           string    `json:"id"` // roll number 
-	UserID       string    `json:"userId"` //uuid
-	ClassroomID  string    `json:"classroomId"`//uuid
+	ID           string    `json:"id"` 
+	RollNumber   int       `json:"rollNumber"`
+	ClassroomID  string    `json:"classroomId"`
 	FirstName    string    `json:"firstName"`
 	LastName     string    `json:"lastName"`
 	Phone        string    `json:"phone"`
@@ -19,5 +19,4 @@ type Student struct {
 	Height       float64   `json:"height"`
 	Weight       float64   `json:"weight"`
 	PhotoURL     string    `json:"photoUrl"`
-	RollNumber   int       `json:"rollNumber"`
 }
